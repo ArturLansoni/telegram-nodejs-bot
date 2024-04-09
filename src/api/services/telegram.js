@@ -68,6 +68,23 @@ function text_message_broker(message) {
   });
 }
 
+function response_parser(response) {
+  let text = '';
+  let options = [];
+
+  response.forEach((item) => {
+    if (item.response_type === 'text') {
+      text = item.text;
+    } else if (item.response_type === 'option') {
+      item.options.forEach((option) => {
+        options.push([{ text: option.label, callback_data: option.label }]);
+      });
+    }
+  });
+  return [text, options];
+}
+
+
 module.exports = {
   start: () => {
     try {
@@ -80,12 +97,12 @@ module.exports = {
         console.debug('chat id ->', ctx.message.chat.id);
 
         const response = await text_message_broker(ctx.message);
-
-        for (let i = 0; i < response.length; i++) {
-          if (response[i].response_type === 'text') {
-            await ctx.reply(response[i].text);
-          }
-        }
+        var [text, options] = response_parser(response);
+        await ctx.reply(text, {
+          reply_markup: {
+            inline_keyboard: options,
+          },
+        });
       });
 
       bot.launch();
