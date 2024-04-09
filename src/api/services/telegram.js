@@ -105,6 +105,22 @@ module.exports = {
         });
       });
 
+      bot.on('callback_query', async (ctx) => {
+        console.debug('**************************************************');
+        console.debug('chat id ->', ctx.callbackQuery.id);
+
+        const response = await text_message_broker({
+          chat: { id: ctx.callbackQuery.id, first_name: ctx.callbackQuery.from.first_name },
+          text: ctx.callbackQuery.data,
+        });
+        var [text, options] = response_parser(response);
+        await ctx.reply(text, {
+          reply_markup: {
+            inline_keyboard: options,
+          },
+        });
+      });
+
       bot.launch();
     } catch (err) {
       console.error(err);
