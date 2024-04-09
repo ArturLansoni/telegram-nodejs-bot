@@ -3,6 +3,7 @@
 const { Telegraf } = require('telegraf');
 const node_cache = require('node-cache');
 const watson_assistant = require('./watson-assistant');
+const speech_to_text = require('./speech-to-text');
 
 const local_cache = new node_cache();
 
