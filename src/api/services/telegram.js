@@ -68,6 +68,30 @@ function text_message_broker(message) {
   });
 }
 
+/**
+ * Function to handle text messages and interact with a IBM watsonx Assistant.
+ * @param {object} message - The message object containing chat information and text.
+ * @param {string} fileLink - The link to the voice file.
+ * @returns {Promise} - A promise resolving to an array of responses.
+ */
+function voice_message_broker(message, fileLink) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Fetch the audio file from the provided link
+      const audioResponse = await fetch(fileLink);
+      const buffer = await audioResponse.arrayBuffer();
+
+      let text = await speech_to_text.synthesize(buffer);
+      message.text = text;
+
+      const response = await text_message_broker(message);
+      resolve(response);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 function response_parser(response) {
   let text = '';
   let options = [];
@@ -113,6 +137,22 @@ module.exports = {
           chat: { id: ctx.callbackQuery.id, first_name: ctx.callbackQuery.from.first_name },
           text: ctx.callbackQuery.data,
         });
+        var [text, options] = response_parser(response);
+        await ctx.reply(text, {
+          reply_markup: {
+            inline_keyboard: options,
+          },
+        });
+      });
+
+      bot.on('voice', async (ctx) => {
+        console.debug('**************************************************');
+        console.debug('chat id ->', ctx.message.chat.id);
+
+        const voice = ctx.message.voice;
+        const fileLink = await ctx.telegram.getFileLink(voice.file_id);
+
+        const response = await voice_message_broker(ctx.message, fileLink);
         var [text, options] = response_parser(response);
         await ctx.reply(text, {
           reply_markup: {
